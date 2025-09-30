@@ -34,7 +34,7 @@ const router = createRouter({
 
 // 路由守卫：在每次路由切换后动态修改标题
 router.afterEach((to) => {
-  document.title = to.meta.title ? `${to.meta.title} - 后台管理系统` : '后台管理系统'
+  document.title = to.meta.title ? `${to.meta.title} - 基于YOLOv8和vue3的目标检测后台管理系统` : '基于YOLOv8和vue3的目标检测后台管理系统'
 })
 
 export default router

@@ -4,9 +4,40 @@
       <div class="toggle-sidebar" @click="toggleSidebar">
         <i class="fas fa-bars"></i>
       </div>
-      <div class="search-box">
-        <i class="fas fa-search"></i>
-        <input type="text" placeholder="搜索..." v-model="searchQuery">
+      <div class="search-container">
+        <div class="search-box">
+          <i class="fas fa-search search-icon"></i>
+          <input 
+            type="text" 
+            placeholder="搜索用户..." 
+            v-model="searchQuery"
+            @keyup.enter="handleSearch"
+            @input="handleSearchInput"
+            ref="searchInput"
+          >
+          <button class="search-button" @click="handleSearch">
+            <span class="search-text">搜索</span>
+          </button>
+        </div>
+        
+        <!-- 搜索结果下拉框 -->
+        <div v-if="searchResults.length > 0 && showResults" class="search-results">
+          <div 
+            v-for="user in searchResults" 
+            :key="user.id"
+            class="search-result-item"
+            @click="selectUser(user)"
+          >
+            <div class="user-avatar-small">{{ user.name.charAt(0) }}</div>
+            <div class="user-info">
+              <div class="user-name">{{ user.name }}</div>
+              <div class="user-email">{{ user.email }}</div>
+            </div>
+          </div>
+          <div class="search-footer" @click="viewAllResults">
+            查看全部结果 ({{ searchResults.length }})
+          </div>
+        </div>
       </div>
     </div>
     <div class="nav-right">
@@ -26,11 +57,23 @@
         <span class="user-name">管理员</span>
       </div>
     </div>
+
+    <!-- 错误提示弹窗 -->
+    <div v-if="showError" class="error-toast">
+      <div class="error-content">
+        <i class="fas fa-exclamation-circle"></i>
+        <span>{{ errorMessage }}</span>
+        <button class="close-error" @click="showError = false">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 
 export default {
@@ -38,7 +81,26 @@ export default {
   emits: ['toggle-sidebar'],
   setup(props, { emit }) {
     const userStore = useUserStore()
+    const router = useRouter()
     const searchQuery = ref('')
+    const showResults = ref(false)
+    const showError = ref(false)
+    const errorMessage = ref('')
+    const searchInput = ref(null)
+    
+    // 计算搜索结果的用户列表
+    const searchResults = computed(() => {
+      if (!searchQuery.value.trim()) {
+        return []
+      }
+      
+      const query = searchQuery.value.toLowerCase()
+      return userStore.users.filter(user => 
+        user.name.toLowerCase().includes(query) || 
+        user.email.toLowerCase().includes(query) ||
+        user.role.toLowerCase().includes(query)
+      )
+    })
     
     const toggleSidebar = () => {
       emit('toggle-sidebar')
@@ -52,11 +114,105 @@ export default {
       userStore.currentTheme === 'light' ? 'fas fa-moon' : 'fas fa-sun'
     )
     
+    // 处理搜索输入
+    const handleSearchInput = () => {
+      if (searchQuery.value.trim()) {
+        showResults.value = true
+      } else {
+        showResults.value = false
+      }
+    }
+    
+    // 显示错误提示
+    const showErrorMessage = (message) => {
+      errorMessage.value = message
+      showError.value = true
+      
+      // 3秒后自动隐藏
+      setTimeout(() => {
+        showError.value = false
+      }, 3000)
+    }
+    
+    // 处理搜索
+    const handleSearch = () => {
+      if (!searchQuery.value.trim()) {
+        showErrorMessage('请输入搜索关键词')
+        return
+      }
+      
+      const results = userStore.searchUsers(searchQuery.value)
+      if (results.length === 0) {
+        showErrorMessage(`没有找到匹配的用户: "${searchQuery.value}"`)
+        return
+      }
+      
+      router.push({
+        path: '/users',
+        query: { search: searchQuery.value }
+      })
+      showResults.value = false
+    }
+    
+    // 选择用户
+    const selectUser = (user) => {
+      router.push({
+        path: '/users',
+        query: { 
+          search: searchQuery.value,
+          highlight: user.id 
+        }
+      })
+      searchQuery.value = ''
+      showResults.value = false
+    }
+    
+    // 查看全部结果
+    const viewAllResults = () => {
+      const results = userStore.searchUsers(searchQuery.value)
+      if (results.length === 0) {
+        showErrorMessage(`没有找到匹配的用户: "${searchQuery.value}"`)
+        return
+      }
+      
+      router.push({
+        path: '/users',
+        query: { search: searchQuery.value }
+      })
+      showResults.value = false
+    }
+    
+    // 点击外部关闭搜索结果
+    const closeResults = (event) => {
+      if (!event.target.closest('.search-container')) {
+        showResults.value = false
+      }
+    }
+    
+    // 添加全局点击事件监听
+    onMounted(() => {
+      document.addEventListener('click', closeResults)
+    })
+    
+    onUnmounted(() => {
+      document.removeEventListener('click', closeResults)
+    })
+    
     return {
       searchQuery,
+      searchResults,
+      showResults,
+      showError,
+      errorMessage,
+      searchInput,
       toggleSidebar,
       toggleTheme,
-      themeIcon
+      themeIcon,
+      handleSearchInput,
+      handleSearch,
+      selectUser,
+      viewAllResults,
+      showErrorMessage
     }
   }
 }
@@ -71,46 +227,76 @@ export default {
   align-items: center;
   box-shadow: var(--shadow);
   z-index: 99;
+  position: relative;
 }
 
 .nav-left {
   display: flex;
   align-items: center;
+  gap: 20px;
 }
 
 .toggle-sidebar {
   font-size: 1.5rem;
-  margin-right: 20px;
   cursor: pointer;
   color: var(--text-color);
 }
 
-.search-box {
+/* 搜索容器样式 */
+.search-container {
   position: relative;
 }
 
-.search-box input {
-  padding: 8px 15px 8px 35px;
+.search-box {
+  display: flex;
+  align-items: center;
+  background: var(--card-bg);
   border: 1px solid #ddd;
-  border-radius: 20px;
-  width: 250px;
-  outline: none;
+  border-radius: 6px;
+  overflow: hidden;
   transition: all 0.3s;
-  background-color: var(--card-bg);
-  color: var(--text-color);
+  width: 350px;
 }
 
-.search-box input:focus {
+.search-box:focus-within {
   border-color: var(--primary);
-  width: 300px;
+  box-shadow: 0 0 0 2px rgba(58, 123, 213, 0.1);
 }
 
-.search-box i {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
+.search-icon {
+  padding: 0 12px;
   color: var(--gray);
+  font-size: 1rem;
+}
+
+.search-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 10px 0;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 0.9rem;
+}
+
+.search-box input::placeholder {
+  color: var(--gray);
+}
+
+.search-button {
+  background: var(--primary);
+  border: none;
+  color: white;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.search-button:hover {
+  background: #2a69c4;
 }
 
 .nav-right {
@@ -161,17 +347,129 @@ export default {
   margin-right: 10px;
 }
 
+/* 搜索结果样式 */
+.search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--card-bg);
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin-top: 5px;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+}
+
+.search-result-item:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
+}
+
+.user-avatar-small {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(to right, var(--primary), var(--secondary));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  font-size: 0.8rem;
+  margin-right: 10px;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.user-name {
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 2px;
+}
+
+.user-email {
+  font-size: 0.8rem;
+  color: var(--gray);
+}
+
+.search-footer {
+  padding: 10px 15px;
+  text-align: center;
+  background-color: rgba(0, 0, 0, 0.03);
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.search-footer:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 错误提示样式 */
+.error-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1100;
+  animation: slideIn 0.3s ease-out;
+}
+
+.error-content {
+  background-color: var(--danger);
+  color: white;
+  padding: 12px 20px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 350px;
+}
+
+.close-error {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  margin-left: auto;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 @media (max-width: 768px) {
   .top-nav {
     padding: 15px;
   }
   
-  .search-box input {
-    width: 150px;
-  }
-  
-  .search-box input:focus {
-    width: 180px;
+  .search-box {
+    width: 280px;
   }
   
   .user-name {
@@ -181,7 +479,20 @@ export default {
 
 @media (max-width: 576px) {
   .search-box {
+    width: 200px;
+  }
+  
+  .search-button .search-text {
     display: none;
+  }
+  
+  .search-button {
+    padding: 10px;
+  }
+  
+  .search-button::after {
+    content: "搜";
+    font-size: 0.9rem;
   }
 }
 </style>
