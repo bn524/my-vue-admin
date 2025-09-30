@@ -13,6 +13,11 @@ export const useUserStore = defineStore('user', () => {
 
   const currentTheme = ref('light')
 
+  // 添加今日用户增长数据
+  const todayUserGrowth = computed(() => {
+    return 8
+  })
+
   const addUser = (user) => {
     user.id = users.value.length + 1
     user.createTime = new Date().toISOString().split('T')[0]
@@ -58,6 +63,7 @@ export const useUserStore = defineStore('user', () => {
     users,
     currentTheme,
     activeUsers,
+    todayUserGrowth,
     addUser,
     deleteUser,
     updateUser,

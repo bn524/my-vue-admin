@@ -178,7 +178,7 @@
 </template>
 
 <script>
-import { ref, reactive, computed, onMounted, watch } from 'vue'
+import { ref, reactive, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
 
@@ -232,7 +232,6 @@ export default {
       errorMessage.value = message
       showError.value = true
       
-      // 3秒后自动隐藏
       setTimeout(() => {
         showError.value = false
       }, 3000)
@@ -260,7 +259,6 @@ export default {
     const submitUser = () => {
       userStore.addUser({ ...newUser })
       showAddModal.value = false
-      // 重置表单
       Object.assign(newUser, {
         name: '',
         email: '',
@@ -270,7 +268,6 @@ export default {
     }
     
     const editUser = (user) => {
-      // 实现编辑逻辑
       console.log('编辑用户:', user)
     }
     
@@ -294,11 +291,9 @@ export default {
     watch(highlightUserId, (newId) => {
       highlightedUserId.value = newId
       
-      // 3秒后取消高亮
       if (newId) {
         setTimeout(() => {
           highlightedUserId.value = null
-          // 移除URL中的highlight参数但保留search
           if (route.query.search) {
             router.replace({ 
               path: '/users', 

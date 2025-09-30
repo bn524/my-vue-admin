@@ -12,7 +12,7 @@
     <div class="stat-card card-orders">
       <div class="stat-info">
         <h3>524</h3>
-        <p>今日订单</p>
+        <p>今日检测数量</p>
       </div>
       <div class="stat-icon">
         <i class="fas fa-shopping-cart"></i>
@@ -21,7 +21,7 @@
     <div class="stat-card card-revenue">
       <div class="stat-info">
         <h3>¥12,580</h3>
-        <p>本月收入</p>
+        <p>本月检测数量</p>
       </div>
       <div class="stat-icon">
         <i class="fas fa-chart-line"></i>
@@ -29,8 +29,8 @@
     </div>
     <div class="stat-card card-growth">
       <div class="stat-info">
-        <h3>+8.5%</h3>
-        <p>增长率</p>
+        <h3>1</h3>
+        <p>用户人数</p>
       </div>
       <div class="stat-icon">
         <i class="fas fa-chart-pie"></i>

@@ -1,40 +1,41 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import Dashboard from '../views/Dashboard.vue'
+import Users from '../views/Users.vue'
+import Settings from '../views/Settings.vue'
+import Detections from '../views/Detections.vue'
+import Models from '../views/Models.vue'
 
 const routes = [
   {
     path: '/',
     name: 'Dashboard',
-    component: () => import('@/views/Dashboard.vue'),
-    meta: {
-      title: '系统概览' // 添加此meta字段
-    }
+    component: Dashboard
   },
   {
     path: '/users',
     name: 'Users',
-    component: () => import('@/views/Users.vue'),
-    meta: {
-      title: '用户管理'
-    }
+    component: Users
+  },
+  {
+    path: '/detections',
+    name: 'Detections',
+    component: Detections
+  },
+  {
+    path: '/models',
+    name: 'Models',
+    component: Models
   },
   {
     path: '/settings',
     name: 'Settings',
-    component: () => import('@/views/Settings.vue'),
-    meta: {
-      title: '系统设置'
-    }
+    component: Settings
   }
 ]
 
 const router = createRouter({
   history: createWebHistory(),
   routes
-})
-
-// 路由守卫：在每次路由切换后动态修改标题
-router.afterEach((to) => {
-  document.title = to.meta.title ? `${to.meta.title} - 基于YOLOv8和vue3的目标检测后台管理系统` : '基于YOLOv8和vue3的目标检测后台管理系统'
 })
 
 export default router

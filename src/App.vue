@@ -3,7 +3,7 @@
     <div class="app-container">
       <Sidebar />
       <div class="main-content">
-        <Header />
+        <Header @toggle-sidebar="toggleSidebar" />
         <div class="content">
           <router-view />
         </div>
@@ -29,8 +29,13 @@ export default {
     
     const currentTheme = computed(() => userStore.currentTheme)
     
+    const toggleSidebar = () => {
+      // 可以在这里添加侧边栏切换逻辑
+    }
+    
     return {
-      currentTheme
+      currentTheme,
+      toggleSidebar
     }
   }
 }

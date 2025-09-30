@@ -1,7 +1,7 @@
 <template>
   <div class="sidebar" :class="{ collapsed: isCollapsed }">
     <div class="sidebar-header">
-      <h2><i class="fas fa-tachometer-alt"></i> <span v-if="!isCollapsed">管理后台</span></h2>
+      <h2><i class="fas fa-camera"></i> <span v-if="!isCollapsed">YOLOv8检测系统</span></h2>
       <p v-if="!isCollapsed">v2.1.0</p>
     </div>
     <div class="sidebar-menu">
@@ -31,6 +31,8 @@ export default {
     
     const menuItems = [
       { name: 'Dashboard', title: '控制台', icon: 'fas fa-home', path: '/' },
+      { name: 'Detections', title: '检测管理', icon: 'fas fa-camera', path: '/detections' },
+      { name: 'Models', title: '模型管理', icon: 'fas fa-cube', path: '/models' },
       { name: 'Users', title: '用户管理', icon: 'fas fa-users', path: '/users' },
       { name: 'Settings', title: '系统设置', icon: 'fas fa-cog', path: '/settings' }
     ]
@@ -72,6 +74,7 @@ export default {
   font-size: 1.5rem;
   margin-bottom: 5px;
   background: linear-gradient(to right, var(--primary), var(--secondary));
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
