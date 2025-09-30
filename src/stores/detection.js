@@ -4,12 +4,12 @@ import DetectionService from '../services/api'
 
 export const useDetectionStore = defineStore('detection', () => {
   // 检测统计数据
-  const totalDetections = ref(12580)
-  const todayDetections = ref(324)
+  const totalDetections = ref(0)
+  const todayDetections = ref(0)
   const detectionAccuracy = ref(0.956)
   const detectedCategories = ref(80)
   
-  // 检测历史记录
+  // 检测历史记录 - 从后端获取
   const detectionHistory = ref([])
   
   // 当前检测状态
@@ -26,23 +26,66 @@ export const useDetectionStore = defineStore('detection', () => {
     { name: '其他', count: 1620, percentage: 13 }
   ])
   
-  // 最近检测记录
-  const recentDetections = ref([
-    {
-      id: 1,
-      filename: 'street_scene.jpg',
-      thumbnail: 'https://via.placeholder.com/60x60/667eea/ffffff?text=SC',
-      objects: 12,
-      time: '10分钟前',
-      status: 'completed',
-      statusText: '已完成',
-      detectionData: null
-    }
-  ])
+  // 最近检测记录 - 从后端获取
+  const recentDetections = ref([])
 
   // 计算属性
   const dailyAverage = computed(() => Math.round(totalDetections.value / 30))
   const weeklyGrowth = computed(() => 12.5)
+
+  // 从后端获取检测历史
+  const fetchDetectionHistory = async (limit = 50) => {
+    try {
+      const response = await DetectionService.getDetectionHistory(0, limit)
+      
+      // 转换数据格式以适应前端
+      const history = response.records.map(record => ({
+        id: record.id,
+        filename: record.filename,
+        thumbnail: record.thumbnail_url 
+          ? `http://localhost:8000${record.thumbnail_url}` 
+          : 'https://via.placeholder.com/60x60/667eea/ffffff?text=IMG',
+        objects: record.detection_count,
+        time: formatTime(record.upload_time),
+        status: 'completed',
+        statusText: '已完成',
+        detectionData: {
+          detections: record.detection_results,
+          image_size: record.image_size.split(',').map(Number).reverse(), // 转换为 [height, width]
+          inference_time: record.inference_time
+        },
+        uploadTime: record.upload_time
+      }))
+      
+      detectionHistory.value = history
+      recentDetections.value = history.slice(0, 10) // 最近10条记录
+      
+      // 更新统计数据
+      totalDetections.value = response.total
+      
+      return history
+    } catch (error) {
+      console.error('获取检测历史失败:', error)
+      throw error
+    }
+  }
+
+  // 时间格式化函数
+  const formatTime = (isoString) => {
+    const date = new Date(isoString)
+    const now = new Date()
+    const diffMs = now - date
+    const diffMins = Math.floor(diffMs / 60000)
+    const diffHours = Math.floor(diffMs / 3600000)
+    const diffDays = Math.floor(diffMs / 86400000)
+    
+    if (diffMins < 1) return '刚刚'
+    if (diffMins < 60) return `${diffMins}分钟前`
+    if (diffHours < 24) return `${diffHours}小时前`
+    if (diffDays < 7) return `${diffDays}天前`
+    
+    return date.toLocaleDateString()
+  }
 
   // 检测方法
   const detectImage = async (file) => {
@@ -54,7 +97,7 @@ export const useDetectionStore = defineStore('detection', () => {
       
       // 创建检测记录
       const detectionRecord = {
-        id: Date.now(),
+        id: response.record_id,
         filename: file.name,
         thumbnail: URL.createObjectURL(file),
         objects: response.count,
@@ -65,7 +108,7 @@ export const useDetectionStore = defineStore('detection', () => {
         uploadTime: new Date().toISOString()
       }
       
-      // 添加到历史记录
+      // 添加到历史记录开头
       detectionHistory.value.unshift(detectionRecord)
       recentDetections.value.unshift(detectionRecord)
       
@@ -130,7 +173,14 @@ export const useDetectionStore = defineStore('detection', () => {
   // 获取服务状态
   const fetchServiceStats = async () => {
     try {
-      return await DetectionService.getServiceStats()
+      const stats = await DetectionService.getServiceStats()
+      
+      // 更新本地统计数据
+      totalDetections.value = stats.total_detections || totalDetections.value
+      todayDetections.value = stats.today_detections || todayDetections.value
+      detectedCategories.value = stats.detection_categories || detectedCategories.value
+      
+      return stats
     } catch (error) {
       console.error('获取服务状态失败:', error)
       throw error
@@ -167,6 +217,7 @@ export const useDetectionStore = defineStore('detection', () => {
     
     // 方法
     detectImage,
+    fetchDetectionHistory,
     getDetectionHistory,
     getDetectionById,
     clearCurrentDetection,

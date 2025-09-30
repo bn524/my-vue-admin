@@ -56,6 +56,18 @@ class DetectionService {
     })
   }
 
+  // 获取检测历史
+  async getDetectionHistory(skip = 0, limit = 50) {
+    return await apiClient.get('/detections', {
+      params: { skip, limit }
+    })
+  }
+
+  // 获取特定检测记录详情
+  async getDetectionDetail(recordId) {
+    return await apiClient.get(`/detections/${recordId}`)
+  }
+
   // 获取服务统计
   async getServiceStats() {
     return await apiClient.get('/stats')
