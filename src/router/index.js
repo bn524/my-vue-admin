@@ -4,6 +4,7 @@ import Users from '../views/Users.vue'
 import Settings from '../views/Settings.vue'
 import Detections from '../views/Detections.vue'
 import Models from '../views/Models.vue'
+import DetectionPage from '../views/DetectionPage.vue'  // 确保这行存在
 
 const routes = [
   {
@@ -25,6 +26,11 @@ const routes = [
     path: '/models',
     name: 'Models',
     component: Models
+  },
+  {
+    path: '/detection',
+    name: 'DetectionPage',
+    component: DetectionPage  // 检测页面路由
   },
   {
     path: '/settings',

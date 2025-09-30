@@ -8,7 +8,9 @@
         </div>
       </div>
       <div>
-        <button class="btn btn-primary"><i class="fas fa-plus"></i> 新建检测</button>
+        <button class="btn btn-primary" @click="goToDetection">
+          <i class="fas fa-plus"></i> 新建检测
+        </button>
       </div>
     </div>
 
@@ -133,19 +135,19 @@
         </div>
         <div class="card-body">
           <div class="action-buttons">
-            <button class="action-btn" @click="startDetection">
+            <button class="action-btn" @click="goToDetection">
               <i class="fas fa-play-circle"></i>
               <span>开始检测</span>
             </button>
-            <button class="action-btn" @click="uploadImage">
+            <button class="action-btn" @click="goToUpload">
               <i class="fas fa-upload"></i>
               <span>上传图片</span>
             </button>
-            <button class="action-btn" @click="viewHistory">
+            <button class="action-btn" @click="goToHistory">
               <i class="fas fa-history"></i>
               <span>检测历史</span>
             </button>
-            <button class="action-btn" @click="manageModels">
+            <button class="action-btn" @click="goToModels">
               <i class="fas fa-cube"></i>
               <span>模型管理</span>
             </button>
@@ -175,7 +177,7 @@
                 </div>
               </div>
               <div class="detection-actions">
-                <button class="btn btn-sm btn-outline" @click="viewDetection(detection.id)">
+                <button class="btn btn-sm btn-outline" @click="viewDetectionDetail(detection.id)">
                   查看
                 </button>
               </div>
@@ -183,8 +185,11 @@
           </div>
           <div v-if="detectionStore.recentDetections.length === 0" class="no-detections">
             <i class="fas fa-images"></i>
-            <p>暂无检测记录</p>
-            <button class="btn btn-primary" @click="startDetection">开始第一次检测</button>
+            <h3>暂无检测记录</h3>
+            <p>系统中还没有检测记录，请开始第一次检测</p>
+            <button class="btn btn-primary" @click="goToDetection">
+              <i class="fas fa-play-circle"></i> 开始检测
+            </button>
           </div>
         </div>
       </div>
@@ -215,24 +220,25 @@ export default {
       }))
     })
     
-    const startDetection = () => {
+    // 导航函数 - 使用不同的函数名避免重复
+    const goToDetection = () => {
       router.push('/detections')
     }
     
-    const uploadImage = () => {
-      console.log('上传图片')
-    }
-    
-    const viewHistory = () => {
+    const goToUpload = () => {
       router.push('/detections')
     }
     
-    const manageModels = () => {
+    const goToHistory = () => {
+      router.push('/detections')
+    }
+    
+    const goToModels = () => {
       router.push('/models')
     }
     
-    const viewDetection = (id) => {
-      console.log('查看检测详情:', id)
+    const viewDetectionDetail = (id) => {
+      router.push(`/detections?view=${id}`)
     }
     
     return {
@@ -240,11 +246,11 @@ export default {
       detectionStore,
       chartTimeRange,
       detectionTrend,
-      startDetection,
-      uploadImage,
-      viewHistory,
-      manageModels,
-      viewDetection
+      goToDetection,
+      goToUpload,
+      goToHistory,
+      goToModels,
+      viewDetectionDetail
     }
   }
 }
@@ -574,8 +580,13 @@ export default {
 
 .no-detections i {
   font-size: 3rem;
-  margin-bottom: 15px;
+  margin-bottom: 20px;
   opacity: 0.5;
+}
+
+.no-detections h3 {
+  margin-bottom: 10px;
+  color: var(--text-color);
 }
 
 .no-detections p {
