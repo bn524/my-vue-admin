@@ -6,6 +6,7 @@ import Detections from '../views/Detections.vue'
 import Models from '../views/Models.vue'
 import DetectionPage from '../views/DetectionPage.vue'  // 确保这行存在
 
+
 const routes = [
   {
     path: '/',
