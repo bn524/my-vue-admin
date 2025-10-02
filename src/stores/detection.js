@@ -60,34 +60,40 @@ export const useDetectionStore = defineStore('detection', () => {
       const response = await DetectionService.getDetectionHistory(0, limit)
       
       // 转换数据格式以适应前端
-      const history = response.records.map(record => ({
-        id: record.id,
-        filename: record.filename,
-        thumbnail: record.thumbnail_url 
-          ? `http://localhost:8000${record.thumbnail_url}` 
-          : 'https://via.placeholder.com/60x60/667eea/ffffff?text=IMG',
-        objects: record.detection_count,  // 单条记录的对象数量
-        time: formatTime(record.upload_time),
-        status: 'completed',
-        statusText: '已完成',
-        detectionData: {
-          detections: record.detection_results,  // 具体检测信息
-          image_size: record.image_size.split(',').map(Number).reverse(),
-          inference_time: record.inference_time
-        },
-        uploadTime: record.upload_time
-      }))
+      const history = response.records.map(record => {
+        // 安全处理image_size，防止undefined
+        const imageSizeParts = record.image_size?.split(',') ?? [];
+        const imageSize = imageSizeParts.map(Number).reverse();
+        
+        return {
+          id: record.id,
+          filename: record.filename || '未知文件',
+          thumbnail: record.thumbnail_url 
+            ? `http://localhost:8000${record.thumbnail_url}` 
+            : 'https://via.placeholder.com/60x60/667eea/ffffff?text=IMG',
+          objects: record.detection_count || 0,
+          time: formatTime(record.upload_time),
+          status: 'completed',
+          statusText: '已完成',
+          detectionData: {
+            detections: record.detection_results || [],
+            image_size: imageSize.length === 2 ? imageSize : [0, 0], // 确保有默认值
+            inference_time: record.inference_time || 0
+          },
+          uploadTime: record.upload_time || new Date().toISOString()
+        }
+      })
       
       detectionHistory.value = history
       recentDetections.value = history.slice(0, 10)
       
       // 更新统计数据
-      totalDetections.value = response.total
+      totalDetections.value = response.total || 0
       
       // 计算今日检测数量（基于实际记录）
       const today = new Date().toISOString().split('T')[0]
       todayDetections.value = history.filter(
-        record => record.upload_time.split('T')[0] === today
+        record => record.uploadTime.split('T')[0] === today
       ).length
       
       return history
@@ -99,6 +105,8 @@ export const useDetectionStore = defineStore('detection', () => {
 
   // 时间格式化函数
   const formatTime = (isoString) => {
+    if (!isoString) return '未知时间'
+    
     const date = new Date(isoString)
     const now = new Date()
     const diffMs = now - date
@@ -127,11 +135,11 @@ export const useDetectionStore = defineStore('detection', () => {
         id: response.record_id,
         filename: file.name,
         thumbnail: URL.createObjectURL(file),
-        objects: response.count,  // 本次检测的对象数量
+        objects: response.count || 0,
         time: '刚刚',
         status: 'completed',
         statusText: '已完成',
-        detectionData: response,  // 包含具体检测信息
+        detectionData: response,
         uploadTime: new Date().toISOString()
       }
       
@@ -145,7 +153,7 @@ export const useDetectionStore = defineStore('detection', () => {
       // 刷新今日统计（确保准确性）
       const today = new Date().toISOString().split('T')[0]
       todayDetections.value = detectionHistory.value.filter(
-        record => record.upload_time.split('T')[0] === today
+        record => record.uploadTime.split('T')[0] === today
       ).length
       
       currentDetection.value = detectionRecord
@@ -258,3 +266,4 @@ export const useDetectionStore = defineStore('detection', () => {
     checkServiceHealth
   }
 })
+    
