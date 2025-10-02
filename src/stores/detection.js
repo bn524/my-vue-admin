@@ -17,14 +17,35 @@ export const useDetectionStore = defineStore('detection', () => {
   const currentDetection = ref(null)
   const detectionError = ref(null)
   
-  // 热门检测类别
-  const topCategories = ref([
-    { name: '人物', count: 4520, percentage: 36 },
-    { name: '车辆', count: 3210, percentage: 25 },
-    { name: '动物', count: 1980, percentage: 16 },
-    { name: '家具', count: 1250, percentage: 10 },
-    { name: '其他', count: 1620, percentage: 13 }
-  ])
+  // 热门检测类别（动态计算）
+  const topCategories = computed(() => {
+    // 从所有检测记录中统计类别数量
+    const categoryCount = {}
+    
+    detectionHistory.value.forEach(record => {
+      record.detectionData?.detections?.forEach(detection => {
+        const className = detection.class
+        if (categoryCount[className]) {
+          categoryCount[className]++
+        } else {
+          categoryCount[className] = 1
+        }
+      })
+    })
+    
+    // 转换为数组并排序（取前5名）
+    return Object.entries(categoryCount)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5)
+      .map((item, index, array) => {
+        const total = array.reduce((sum, i) => sum + i.count, 0)
+        return {
+          ...item,
+          percentage: total ? Math.round((item.count / total) * 100) : 0
+        }
+      })
+  })
   
   // 最近检测记录 - 从后端获取
   const recentDetections = ref([])
@@ -45,23 +66,29 @@ export const useDetectionStore = defineStore('detection', () => {
         thumbnail: record.thumbnail_url 
           ? `http://localhost:8000${record.thumbnail_url}` 
           : 'https://via.placeholder.com/60x60/667eea/ffffff?text=IMG',
-        objects: record.detection_count,
+        objects: record.detection_count,  // 单条记录的对象数量
         time: formatTime(record.upload_time),
         status: 'completed',
         statusText: '已完成',
         detectionData: {
-          detections: record.detection_results,
-          image_size: record.image_size.split(',').map(Number).reverse(), // 转换为 [height, width]
+          detections: record.detection_results,  // 具体检测信息
+          image_size: record.image_size.split(',').map(Number).reverse(),
           inference_time: record.inference_time
         },
         uploadTime: record.upload_time
       }))
       
       detectionHistory.value = history
-      recentDetections.value = history.slice(0, 10) // 最近10条记录
+      recentDetections.value = history.slice(0, 10)
       
       // 更新统计数据
       totalDetections.value = response.total
+      
+      // 计算今日检测数量（基于实际记录）
+      const today = new Date().toISOString().split('T')[0]
+      todayDetections.value = history.filter(
+        record => record.upload_time.split('T')[0] === today
+      ).length
       
       return history
     } catch (error) {
@@ -100,11 +127,11 @@ export const useDetectionStore = defineStore('detection', () => {
         id: response.record_id,
         filename: file.name,
         thumbnail: URL.createObjectURL(file),
-        objects: response.count,
+        objects: response.count,  // 本次检测的对象数量
         time: '刚刚',
         status: 'completed',
         statusText: '已完成',
-        detectionData: response,
+        detectionData: response,  // 包含具体检测信息
         uploadTime: new Date().toISOString()
       }
       
@@ -114,7 +141,12 @@ export const useDetectionStore = defineStore('detection', () => {
       
       // 更新统计
       totalDetections.value++
-      todayDetections.value++
+      
+      // 刷新今日统计（确保准确性）
+      const today = new Date().toISOString().split('T')[0]
+      todayDetections.value = detectionHistory.value.filter(
+        record => record.upload_time.split('T')[0] === today
+      ).length
       
       currentDetection.value = detectionRecord
       return detectionRecord
@@ -175,7 +207,7 @@ export const useDetectionStore = defineStore('detection', () => {
     try {
       const stats = await DetectionService.getServiceStats()
       
-      // 更新本地统计数据
+      // 更新本地统计数据（与后端同步）
       totalDetections.value = stats.total_detections || totalDetections.value
       todayDetections.value = stats.today_detections || todayDetections.value
       detectedCategories.value = stats.detection_categories || detectedCategories.value

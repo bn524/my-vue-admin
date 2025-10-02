@@ -53,14 +53,12 @@
         </div>
       </div>
       <div class="status-card">
-        <div class="status-card">
-          <div class="status-icon primary">
-            <i class="fas fa-object-group"></i>
-          </div>
-          <div class="status-content">
-            <h3>检测对象</h3>
-            <p>{{ todayStats.objects }} 个</p>
-          </div>
+        <div class="status-icon primary">
+          <i class="fas fa-object-group"></i>
+        </div>
+        <div class="status-content">
+          <h3>检测对象</h3>
+          <p>{{ todayStats.objects }} 个</p>
         </div>
       </div>
     </div>
@@ -258,6 +256,27 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useDetectionStore } from '../stores/detection'
 import UploadModal from '../components/UploadModal.vue'
 
+// 辅助函数：检查日期是否在指定范围内
+const isDateInRange = (dateString, range) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  
+  switch(range) {
+    case 'today':
+      return date >= today
+    case 'week':
+      const weekStart = new Date(today)
+      weekStart.setDate(today.getDate() - today.getDay())
+      return date >= weekStart
+    case 'month':
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
+      return date >= monthStart
+    default:
+      return true
+  }
+}
+
 export default {
   name: 'Detections',
   components: {
@@ -282,6 +301,13 @@ export default {
       // 状态过滤
       if (statusFilter.value) {
         detections = detections.filter(d => d.status === statusFilter.value)
+      }
+      
+      // 日期过滤
+      if (dateFilter.value) {
+        detections = detections.filter(d => 
+          isDateInRange(d.uploadTime, dateFilter.value)
+        )
       }
       
       // 搜索过滤
@@ -314,10 +340,20 @@ export default {
     // 加载今日统计
     const loadTodayStats = async () => {
       try {
+        // 从后端获取统计
         const stats = await detectionStore.fetchServiceStats()
+        // 获取所有检测记录
+        const allDetections = detectionStore.getDetectionHistory()
+        const today = new Date().toISOString().split('T')[0]
+        
+        // 计算今日检测的对象总数
+        const todayObjects = allDetections
+          .filter(d => d.uploadTime.split('T')[0] === today)
+          .reduce((sum, d) => sum + d.objects, 0)
+        
         todayStats.value = {
           detections: stats.today_detections || 0,
-          objects: 150 // 这里可以根据实际数据调整
+          objects: todayObjects // 动态计算今日对象总数
         }
       } catch (error) {
         console.error('加载统计失败:', error)
@@ -360,13 +396,16 @@ export default {
     }
 
     // 初始化
-    onMounted(() => {
+    onMounted(async () => {
       checkServiceStatus()
+      // 先加载检测历史，再计算统计
+      await detectionStore.fetchDetectionHistory()
       loadTodayStats()
       
-      // 每30秒检查一次服务状态
-      const interval = setInterval(() => {
+      // 每30秒检查一次服务状态和统计
+      const interval = setInterval(async () => {
         checkServiceStatus()
+        await detectionStore.fetchDetectionHistory()
         loadTodayStats()
       }, 30000)
       
@@ -392,6 +431,7 @@ export default {
   }
 }
 </script>
+    
 
 <style scoped>
 .detections {
