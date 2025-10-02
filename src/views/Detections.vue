@@ -293,6 +293,8 @@ export default {
       detections: 0,
       objects: 0
     })
+    // 1. 顶层定义定时器变量（确保onUnmounted能访问）
+    let statusCheckInterval = null
 
     // 计算过滤后的检测记录
     const filteredDetections = computed(() => {
@@ -383,35 +385,45 @@ export default {
       }
     }
 
-    // 处理文件上传
+    // 处理文件上传（补充：检测后刷新历史记录）
     const handleFileUpload = async (file) => {
       try {
         await detectionStore.detectImage(file)
         showUploadModal.value = false
-        // 重新加载统计
+        // 关键：检测完成后刷新历史记录，确保新记录显示
+        await detectionStore.fetchDetectionHistory()
+        // 重新计算统计
         loadTodayStats()
       } catch (error) {
         console.error('检测失败:', error)
+        // 失败时也刷新，避免异常记录残留
+        await detectionStore.fetchDetectionHistory()
+        loadTodayStats()
       }
     }
 
-    // 初始化
+    // 2. 顶层同步注册onUnmounted（修复警告核心）
+    onUnmounted(() => {
+      // 清除定时器，避免内存泄漏
+      if (statusCheckInterval) {
+        clearInterval(statusCheckInterval)
+        statusCheckInterval = null
+      }
+    })
+
+    // 初始化逻辑
     onMounted(async () => {
       checkServiceStatus()
-      // 先加载检测历史，再计算统计
+      // 先加载检测历史，再计算统计（确保数据完整）
       await detectionStore.fetchDetectionHistory()
       loadTodayStats()
       
-      // 每30秒检查一次服务状态和统计
-      const interval = setInterval(async () => {
+      // 设置定时刷新（赋值给顶层变量）
+      statusCheckInterval = setInterval(async () => {
         checkServiceStatus()
         await detectionStore.fetchDetectionHistory()
         loadTodayStats()
       }, 30000)
-      
-      onUnmounted(() => {
-        clearInterval(interval)
-      })
     })
 
     return {
@@ -431,7 +443,6 @@ export default {
   }
 }
 </script>
-    
 
 <style scoped>
 .detections {
