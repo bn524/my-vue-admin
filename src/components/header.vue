@@ -52,9 +52,26 @@
         <i class="far fa-envelope"></i>
         <span class="badge">3</span>
       </div>
-      <div class="user-profile">
-        <div class="user-avatar">A</div>
-        <span class="user-name">管理员</span>
+      
+      <!-- 登录状态显示与登出功能 -->
+      <div v-if="authStore.isLoggedIn" class="user-profile-container">
+        <div class="user-profile" @click="toggleProfileMenu">
+          <div class="user-avatar">{{ authStore.userName.charAt(0) }}</div>
+          <span class="user-name">{{ authStore.userName }}</span>
+          <i class="fas fa-chevron-down ml-2" :class="{ 'rotate-180': profileMenuOpen }"></i>
+        </div>
+        
+        <!-- 用户菜单（登出按钮） -->
+        <div v-if="profileMenuOpen" class="profile-dropdown">
+          <div class="dropdown-item" @click="handleLogout">
+            <i class="fas fa-sign-out-alt mr-2"></i> 登出
+          </div>
+        </div>
+      </div>
+      
+      <!-- 未登录时显示登录按钮 -->
+      <div v-else class="login-button" @click="goToLogin">
+        <i class="fas fa-sign-in-alt mr-1"></i> 登录
       </div>
     </div>
 
@@ -75,18 +92,23 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '../stores/user'
+// 引入登录状态管理
+import { useAuthStore } from '../stores/auth'
 
 export default {
   name: 'Header',
   emits: ['toggle-sidebar'],
   setup(props, { emit }) {
     const userStore = useUserStore()
+    const authStore = useAuthStore() // 登录状态存储
     const router = useRouter()
     const searchQuery = ref('')
     const showResults = ref(false)
     const showError = ref(false)
     const errorMessage = ref('')
     const searchInput = ref(null)
+    // 新增：用户菜单状态
+    const profileMenuOpen = ref(false)
     
     // 计算搜索结果的用户列表
     const searchResults = computed(() => {
@@ -184,14 +206,35 @@ export default {
     
     // 点击外部关闭搜索结果
     const closeResults = (event) => {
-      if (!event.target.closest('.search-container')) {
+      if (!event.target.closest('.search-container') && 
+          !event.target.closest('.user-profile-container')) {
         showResults.value = false
+        profileMenuOpen.value = false
       }
+    }
+    
+    // 新增：用户菜单切换
+    const toggleProfileMenu = () => {
+      profileMenuOpen.value = !profileMenuOpen.value
+    }
+    
+    // 新增：登出处理
+    const handleLogout = () => {
+      authStore.logout()
+      profileMenuOpen.value = false
+      showErrorMessage('已成功登出')
+    }
+    
+    // 新增：跳转到登录页
+    const goToLogin = () => {
+      router.push('/login')
     }
     
     // 添加全局点击事件监听
     onMounted(() => {
       document.addEventListener('click', closeResults)
+      // 初始化登录状态
+      authStore.initAuthState()
     })
     
     onUnmounted(() => {
@@ -212,7 +255,12 @@ export default {
       handleSearch,
       selectUser,
       viewAllResults,
-      showErrorMessage
+      showErrorMessage,
+      authStore,
+      profileMenuOpen,
+      toggleProfileMenu,
+      handleLogout,
+      goToLogin
     }
   }
 }
@@ -327,11 +375,17 @@ export default {
   justify-content: center;
 }
 
+/* 用户信息与登出菜单样式 */
+.user-profile-container {
+  position: relative;
+  margin-left: 20px;
+}
+
 .user-profile {
   display: flex;
   align-items: center;
-  margin-left: 20px;
   cursor: pointer;
+  padding: 5px 0;
 }
 
 .user-avatar {
@@ -345,6 +399,57 @@ export default {
   color: white;
   font-weight: bold;
   margin-right: 10px;
+}
+
+.user-name {
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+/* 登录按钮样式 */
+.login-button {
+  margin-left: 20px;
+  padding: 6px 12px;
+  background-color: var(--primary);
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.login-button:hover {
+  background-color: #2a69c4;
+}
+
+/* 用户下拉菜单 */
+.profile-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background-color: var(--card-bg);
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 160px;
+  margin-top: 5px;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.dropdown-item {
+  padding: 10px 15px;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-item:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--primary);
 }
 
 /* 搜索结果样式 */
@@ -450,6 +555,24 @@ export default {
   color: white;
   cursor: pointer;
   margin-left: auto;
+}
+
+/* 辅助样式 */
+.rotate-180 {
+  transform: rotate(180deg);
+  transition: transform 0.2s;
+}
+
+.ml-2 {
+  margin-left: 8px;
+}
+
+.mr-2 {
+  margin-right: 8px;
+}
+
+.mr-1 {
+  margin-right: 4px;
 }
 
 @keyframes slideIn {
