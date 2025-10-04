@@ -41,6 +41,13 @@ const routes = [
     component: () => import('../views/settings.vue'), // 确认 settings.vue 存在，不存在则注释
     meta: { requireAuth: true }
   },
+  // 用户管理页（新增路由，需要登录）
+  {
+    path: '/users',
+    name: 'Users',
+    component: () => import('../views/Users.vue'), // 对应你的 Users.vue 组件
+    meta: { requireAuth: true }
+  },
   // 重定向：默认跳登录页
   {
     path: '/',
@@ -54,7 +61,7 @@ const routes = [
   // }
 ]
 
-// 创建路由实例（错误日志指向这里，但实际是上面路由配置的问题）
+// 创建路由实例
 const router = createRouter({
   history: createWebHistory(),
   routes
@@ -62,6 +69,7 @@ const router = createRouter({
 
 // 全局前置路由守卫（确保 Pinia 已安装）
 router.beforeEach((to, from, next) => {
+  
   try {
     // 初始化登录状态
     const authStore = useAuthStore()
