@@ -6,8 +6,12 @@ import { useAuthStore } from '../stores/auth'
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 // 修复点1：只保留你实际存在的视图文件路由，删除不存在的文件（如404.vue）
 // 修复点2：确保所有 component 导入路径与实际文件一致
+=======
+
+>>>>>>> Stashed changes
 =======
 
 >>>>>>> Stashed changes

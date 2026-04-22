@@ -56,6 +56,7 @@
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         <div class="status-icon primary">
           <i class="fas fa-object-group"></i>
         </div>
@@ -63,6 +64,8 @@
           <h3>检测对象</h3>
           <p>{{ todayStats.objects }} 个</p>
 =======
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -77,6 +80,9 @@
           </div>
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -281,6 +287,7 @@ import UploadModal from '../components/UploadModal.vue'
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 
 // 辅助函数：检查日期是否在指定范围内
 const isDateInRange = (dateString, range) => {
@@ -308,6 +315,8 @@ const isDateInRange = (dateString, range) => {
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
+=======
+>>>>>>> Stashed changes
 
 export default {
   name: 'Detections',
@@ -328,8 +337,11 @@ export default {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     // 1. 顶层定义定时器变量（确保onUnmounted能访问）
     let statusCheckInterval = null
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -349,6 +361,7 @@ export default {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       // 日期过滤
       if (dateFilter.value) {
         detections = detections.filter(d => 
@@ -356,6 +369,8 @@ export default {
         )
       }
       
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -382,6 +397,7 @@ export default {
         width: ((detection.bbox[2] - detection.bbox[0]) / width * 100) + '%',
         height: ((detection.bbox[3] - detection.bbox[1]) / height * 100) + '%'
       }
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
@@ -456,12 +472,31 @@ const checkServiceStatus = async () => {
     const loadTodayStats = async () => {
       try {
 >>>>>>> Stashed changes
+=======
+    }
+
+    // 检查服务状态
+const checkServiceStatus = async () => {
+  try {
+    serviceOnline.value = await detectionStore.checkServiceHealth()
+  } catch (error) {
+    serviceOnline.value = false
+    console.error('服务状态检查失败:', error.message)
+  }
+}
+    // 加载今日统计
+    const loadTodayStats = async () => {
+      try {
+>>>>>>> Stashed changes
         const stats = await detectionStore.fetchServiceStats()
         todayStats.value = {
           detections: stats.today_detections || 0,
           objects: 150 // 这里可以根据实际数据调整
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
@@ -499,7 +534,11 @@ const checkServiceStatus = async () => {
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
     // 处理文件上传（补充：检测后刷新历史记录）
+=======
+    // 处理文件上传
+>>>>>>> Stashed changes
 =======
     // 处理文件上传
 >>>>>>> Stashed changes
@@ -513,6 +552,7 @@ const checkServiceStatus = async () => {
       try {
         await detectionStore.detectImage(file)
         showUploadModal.value = false
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
@@ -589,6 +629,25 @@ const checkServiceStatus = async () => {
     onMounted(() => {
       checkServiceStatus()
       loadTodayStats()
+=======
+        // 重新加载统计
+        loadTodayStats()
+      } catch (error) {
+        console.error('检测失败:', error)
+      }
+    }
+
+    // 初始化
+    onMounted(() => {
+      checkServiceStatus()
+      loadTodayStats()
+      
+      // 每30秒检查一次服务状态
+      const interval = setInterval(() => {
+        checkServiceStatus()
+        loadTodayStats()
+      }, 30000)
+>>>>>>> Stashed changes
       
       // 每30秒检查一次服务状态
       const interval = setInterval(() => {
