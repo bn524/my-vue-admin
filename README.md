@@ -5,7 +5,7 @@
   <img src="https://img.shields.io/badge/Vue.js-3.3.4-4fc08d?style=for-the-badge&logo=vuedotjs&logoColor=white" alt="Vue.js">
   <img src="https://img.shields.io/badge/FastAPI-0.104.1-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI">
   <img src="https://img.shields.io/badge/YOLOv8-8.0.0-00a8ff?style=for-the-badge&logo=pytorch&logoColor=white" alt="YOLOv8">
-  <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License">
+  <img src="https:/img.shields.io/badge/License-MIT-yellow?style=for-the-badge" alt="License">
 
   <br>
   <strong>现代化的全栈目标检测解决方案，集成前沿的计算机视觉技术和现代Web开发框架</strong>
