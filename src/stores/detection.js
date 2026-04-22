@@ -233,7 +233,7 @@ export const useDetectionStore = defineStore('detection', () => {
       await DetectionService.healthCheck()
       return true
     } catch (error) {
-      console.error('服务健康检查失败:', error)
+      console.error('服务健康检查失败:', error.message)
       return false
     }
   }

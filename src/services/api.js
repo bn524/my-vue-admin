@@ -13,6 +13,7 @@ apiClient.interceptors.request.use(
     return config
   },
   (error) => {
+    console.error('请求配置错误:', error)
     return Promise.reject(error)
   }
 )
@@ -24,7 +25,21 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     console.error('API请求错误:', error)
-    const message = error.response?.data?.detail || error.message || '网络错误'
+    
+    let message = '网络错误'
+    
+    if (error.code === 'ECONNREFUSED') {
+      message = '无法连接到后端服务，请检查：\n1. 后端服务是否启动\n2. 端口号是否正确\n3. 网络连接是否正常'
+    } else if (error.response) {
+      // 服务器返回了错误状态码
+      message = error.response.data?.detail || `服务器错误: ${error.response.status}`
+    } else if (error.request) {
+      // 请求已发出但没有收到响应
+      message = '网络请求超时或服务器无响应'
+    } else {
+      message = error.message || '未知错误'
+    }
+    
     throw new Error(message)
   }
 )
@@ -33,7 +48,12 @@ apiClient.interceptors.response.use(
 class DetectionService {
   // 健康检查
   async healthCheck() {
-    return await apiClient.get('/')
+    try {
+      return await apiClient.get('/')
+    } catch (error) {
+      console.error('健康检查失败:', error.message)
+      throw error
+    }
   }
 
   // 获取模型信息
@@ -49,20 +69,9 @@ class DetectionService {
     return await apiClient.post('/detect', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
-      }
+      },
+      timeout: 60000 // 检测可能需要更长时间
     })
-  }
-
-  // 获取检测历史
-  async getDetectionHistory(skip = 0, limit = 50) {
-    return await apiClient.get('/detections', {
-      params: { skip, limit }
-    })
-  }
-
-  // 获取特定检测记录详情
-  async getDetectionDetail(recordId) {
-    return await apiClient.get(`/detections/${recordId}`)
   }
 
   // 获取服务统计

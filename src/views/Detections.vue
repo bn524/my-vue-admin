@@ -53,12 +53,23 @@
         </div>
       </div>
       <div class="status-card">
+<<<<<<< Updated upstream
         <div class="status-icon primary">
           <i class="fas fa-object-group"></i>
         </div>
         <div class="status-content">
           <h3>检测对象</h3>
           <p>{{ todayStats.objects }} 个</p>
+=======
+        <div class="status-card">
+          <div class="status-icon primary">
+            <i class="fas fa-object-group"></i>
+          </div>
+          <div class="status-content">
+            <h3>检测对象</h3>
+            <p>{{ todayStats.objects }} 个</p>
+          </div>
+>>>>>>> Stashed changes
         </div>
       </div>
     </div>
@@ -255,6 +266,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useDetectionStore } from '../stores/detection'
 import UploadModal from '../components/UploadModal.vue'
+<<<<<<< Updated upstream
 
 // 辅助函数：检查日期是否在指定范围内
 const isDateInRange = (dateString, range) => {
@@ -276,6 +288,8 @@ const isDateInRange = (dateString, range) => {
       return true
   }
 }
+=======
+>>>>>>> Stashed changes
 
 export default {
   name: 'Detections',
@@ -293,8 +307,11 @@ export default {
       detections: 0,
       objects: 0
     })
+<<<<<<< Updated upstream
     // 1. 顶层定义定时器变量（确保onUnmounted能访问）
     let statusCheckInterval = null
+=======
+>>>>>>> Stashed changes
 
     // 计算过滤后的检测记录
     const filteredDetections = computed(() => {
@@ -305,6 +322,7 @@ export default {
         detections = detections.filter(d => d.status === statusFilter.value)
       }
       
+<<<<<<< Updated upstream
       // 日期过滤
       if (dateFilter.value) {
         detections = detections.filter(d => 
@@ -312,6 +330,8 @@ export default {
         )
       }
       
+=======
+>>>>>>> Stashed changes
       // 搜索过滤
       if (searchQuery.value) {
         const query = searchQuery.value.toLowerCase()
@@ -332,6 +352,7 @@ export default {
         width: ((detection.bbox[2] - detection.bbox[0]) / width * 100) + '%',
         height: ((detection.bbox[3] - detection.bbox[1]) / height * 100) + '%'
       }
+<<<<<<< Updated upstream
     }
 
     // 检查服务状态
@@ -356,6 +377,26 @@ export default {
         todayStats.value = {
           detections: stats.today_detections || 0,
           objects: todayObjects // 动态计算今日对象总数
+=======
+    }
+
+    // 检查服务状态
+const checkServiceStatus = async () => {
+  try {
+    serviceOnline.value = await detectionStore.checkServiceHealth()
+  } catch (error) {
+    serviceOnline.value = false
+    console.error('服务状态检查失败:', error.message)
+  }
+}
+    // 加载今日统计
+    const loadTodayStats = async () => {
+      try {
+        const stats = await detectionStore.fetchServiceStats()
+        todayStats.value = {
+          detections: stats.today_detections || 0,
+          objects: 150 // 这里可以根据实际数据调整
+>>>>>>> Stashed changes
         }
       } catch (error) {
         console.error('加载统计失败:', error)
@@ -385,11 +426,16 @@ export default {
       }
     }
 
+<<<<<<< Updated upstream
     // 处理文件上传（补充：检测后刷新历史记录）
+=======
+    // 处理文件上传
+>>>>>>> Stashed changes
     const handleFileUpload = async (file) => {
       try {
         await detectionStore.detectImage(file)
         showUploadModal.value = false
+<<<<<<< Updated upstream
         // 关键：检测完成后刷新历史记录，确保新记录显示
         await detectionStore.fetchDetectionHistory()
         // 重新计算统计
@@ -422,6 +468,23 @@ export default {
       statusCheckInterval = setInterval(async () => {
         checkServiceStatus()
         await detectionStore.fetchDetectionHistory()
+=======
+        // 重新加载统计
+        loadTodayStats()
+      } catch (error) {
+        console.error('检测失败:', error)
+      }
+    }
+
+    // 初始化
+    onMounted(() => {
+      checkServiceStatus()
+      loadTodayStats()
+      
+      // 每30秒检查一次服务状态
+      const interval = setInterval(() => {
+        checkServiceStatus()
+>>>>>>> Stashed changes
         loadTodayStats()
       }, 30000)
     })
